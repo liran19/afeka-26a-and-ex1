@@ -1,0 +1,210 @@
+package com.example.homeex1
+
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.View
+import android.widget.ImageView
+import android.widget.Toast
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.example.homeex1.databinding.ActivityMainBinding
+
+
+class MainActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityMainBinding
+    private  lateinit var game: GameState
+    private var hitToast: Toast? = null
+
+    private lateinit var obstacleViews: Array<Array<ImageView>>
+    private lateinit var playerViews: Array<ImageView>
+    private lateinit var heartViews: List<ImageView>
+    private lateinit var btnLeft: FloatingActionButton
+    private lateinit var btnRight: FloatingActionButton
+
+    // Game loop
+    private val handler = Handler(Looper.getMainLooper())
+    private val tickMillis = 1000L
+
+    private val gameRunnable = object : Runnable {
+        override fun run() {
+            val event = game.step()
+            render()
+            handleEvent(event)
+
+            // Endless game
+            handler.postDelayed(this, tickMillis)
+        }
+    }
+
+    // Lifecycle
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        val config = GameConfig()
+        game = GameState(config)
+        initViews()
+        initButtons()
+        render()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        startGameLoop()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(gameRunnable)
+    }
+
+    private fun initViews() {
+        // hearts
+        heartViews = listOf(
+            binding.heart1,
+            binding.heart2,
+            binding.heart3
+        )
+
+        // 3x3 obstacle matrix
+        obstacleViews = arrayOf(
+            arrayOf(
+                binding.imgInfo00,
+                binding.imgInfo01,
+                binding.imgInfo02
+            ),
+            arrayOf(
+                binding.imgInfo10,
+                binding.imgInfo11,
+                binding.imgInfo12
+            ),
+            arrayOf(
+                binding.imgInfo20,
+                binding.imgInfo21,
+                binding.imgInfo22
+            )
+        )
+
+        // bottom row – player positions
+        playerViews = arrayOf(
+            binding.imgPlayer00,
+            binding.imgPlayer01,
+            binding.imgPlayer02
+        )
+
+        // buttons
+        btnLeft = binding.btnLeft
+        btnRight = binding.btnRight
+    }
+
+    private fun initButtons() {
+        binding.btnLeft.setOnClickListener {
+            game.movePlayerLeft()
+            renderPlayer()
+        }
+
+        binding.btnRight.setOnClickListener {
+            game.movePlayerRight()
+            renderPlayer()
+        }
+    }
+
+    private fun startGameLoop() {
+        handler.removeCallbacks(gameRunnable)
+        handler.postDelayed(gameRunnable, tickMillis)
+    }
+
+    private fun render() {
+        renderObstacles()
+        renderPlayer()
+        renderHearts()
+    }
+
+    private fun renderObstacles(){
+        for ( r in 0 until game.config.rows){
+            for (c in 0 until game.config.cols){
+
+                val view = obstacleViews[r][c]
+                val cellType = game.grid[r][c]
+
+                if (cellType.isVisible){
+                    view.visibility = View.VISIBLE
+                }else {
+                    view.visibility = View.INVISIBLE
+                }
+            }
+        }
+    }
+
+    private fun renderPlayer(){
+        val playerCol = game.player.getCol()
+
+        for (c in 0 until game.config.cols){
+            if (c == playerCol){
+                playerViews[c].visibility = View.VISIBLE
+            } else {
+                playerViews[c].visibility = View.INVISIBLE
+            }
+        }
+    }
+
+    private fun renderHearts() {
+        val lives = game.player.getLives()
+
+        for (i in heartViews.indices) {
+            if (i < lives) {
+                heartViews[i].visibility = View.VISIBLE
+            } else {
+                heartViews[i].visibility = View.INVISIBLE
+            }
+        }
+    }
+
+    private fun vibrate(milliseconds: Long = 100) {
+        val vibratorManager = getSystemService(VibratorManager::class.java)
+        val vibrator: Vibrator = vibratorManager.defaultVibrator
+
+        if (!vibrator.hasVibrator()) {
+            Toast.makeText(this, "No vibrator on this device", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        vibrator.vibrate(
+            VibrationEffect.createOneShot(
+                milliseconds,
+                VibrationEffect.DEFAULT_AMPLITUDE
+            )
+        )
+    }
+
+    private fun handleEvent(event: GameEvent) {
+        when (event) {
+            GameEvent.NONE -> {}
+            GameEvent.HIT -> {
+                vibrate(80)
+                val message = "Crash! Lives left: ${game.player.getLives()}"
+                hitToast?.cancel() // Cancel the previous toast
+                hitToast = Toast.makeText(this, message, Toast.LENGTH_SHORT)
+                hitToast?.show()
+            }
+            GameEvent.GAME_OVER -> {
+                vibrate(250)
+                val message = "Game over! Restarting..."
+                hitToast?.cancel() // Cancel the previous toast
+                hitToast = Toast.makeText(this, message, Toast.LENGTH_SHORT)
+                hitToast?.show()
+
+                handler.postDelayed({
+                    game.reset()
+                    render()
+                }, 1000)
+            }
+        }
+    }
+
+}
