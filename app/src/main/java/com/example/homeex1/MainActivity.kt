@@ -9,12 +9,25 @@ import android.widget.Toast
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.example.homeex1.databinding.ActivityMainBinding
 
+enum class GameMode {
+    BUTTONS,
+    SENSORS
+}
 
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        const val GAME_MODE_KEY = "GAME_MODE_KEY"
+        const val FAST_MODE_KEY = "FAST_MODE_KEY"
+    }
+
     private lateinit var binding: ActivityMainBinding
     private  lateinit var game: GameState
     private var hitToast: Toast? = null
@@ -25,9 +38,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnLeft: FloatingActionButton
     private lateinit var btnRight: FloatingActionButton
 
+    // Game settings from menu
+    private var gameMode: GameMode = GameMode.BUTTONS
+    private var isFastMode: Boolean = false
+
     // Game loop
     private val handler = Handler(Looper.getMainLooper())
-    private val tickMillis = 1000L
+    private var tickMillis = 1000L
 
     private val gameRunnable = object : Runnable {
         override fun run() {
@@ -43,8 +60,22 @@ class MainActivity : AppCompatActivity() {
     // Lifecycle
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+
+        // Get settings from menu
+        val modeString = intent.getStringExtra(GAME_MODE_KEY) ?: GameMode.BUTTONS.name
+        gameMode = GameMode.valueOf(modeString)
+        isFastMode = intent.getBooleanExtra(FAST_MODE_KEY, false)
+        
+        // Set game speed based on mode
+        tickMillis = if (isFastMode) 500L else 1000L
 
         val config = GameConfig()
         game = GameState(config)
@@ -146,14 +177,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initButtons() {
-        binding.btnLeft.setOnClickListener {
-            game.movePlayerLeft()
-            renderPlayer()
-        }
+        when (gameMode) {
+            GameMode.BUTTONS -> {
+                binding.btnLeft.visibility = View.VISIBLE
+                binding.btnRight.visibility = View.VISIBLE
+                
+                binding.btnLeft.setOnClickListener {
+                    game.movePlayerLeft()
+                    renderPlayer()
+                }
 
-        binding.btnRight.setOnClickListener {
-            game.movePlayerRight()
-            renderPlayer()
+                binding.btnRight.setOnClickListener {
+                    game.movePlayerRight()
+                    renderPlayer()
+                }
+            }
+            GameMode.SENSORS -> {
+                binding.btnLeft.visibility = View.GONE
+                binding.btnRight.visibility = View.GONE
+                // TODO: Add sensor support
+            }
         }
     }
 
