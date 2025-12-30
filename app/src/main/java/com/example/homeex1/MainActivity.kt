@@ -71,22 +71,63 @@ class MainActivity : AppCompatActivity() {
             binding.heart3
         )
 
-        // 3x3 obstacle matrix
+        // 8x5 obstacle matrix
         obstacleViews = arrayOf(
             arrayOf(
                 binding.imgInfo00,
                 binding.imgInfo01,
-                binding.imgInfo02
+                binding.imgInfo02,
+                binding.imgInfo03,
+                binding.imgInfo04
             ),
             arrayOf(
                 binding.imgInfo10,
                 binding.imgInfo11,
-                binding.imgInfo12
-            ),
+                binding.imgInfo12,
+                binding.imgInfo13,
+                binding.imgInfo14
+                ),
             arrayOf(
                 binding.imgInfo20,
                 binding.imgInfo21,
-                binding.imgInfo22
+                binding.imgInfo22,
+                binding.imgInfo23,
+                binding.imgInfo24
+            ),
+            arrayOf(
+                binding.imgInfo30,
+                binding.imgInfo31,
+                binding.imgInfo32,
+                binding.imgInfo33,
+                binding.imgInfo34
+            ),
+            arrayOf(
+                binding.imgInfo40,
+                binding.imgInfo41,
+                binding.imgInfo42,
+                binding.imgInfo43,
+                binding.imgInfo44
+            ),
+            arrayOf(
+                binding.imgInfo50,
+                binding.imgInfo51,
+                binding.imgInfo52,
+                binding.imgInfo53,
+                binding.imgInfo54
+            ),
+            arrayOf(
+                binding.imgInfo60,
+                binding.imgInfo61,
+                binding.imgInfo62,
+                binding.imgInfo63,
+                binding.imgInfo64
+            ),
+            arrayOf(
+                binding.imgInfo70,
+                binding.imgInfo71,
+                binding.imgInfo72,
+                binding.imgInfo73,
+                binding.imgInfo74
             )
         )
 
@@ -94,7 +135,9 @@ class MainActivity : AppCompatActivity() {
         playerViews = arrayOf(
             binding.imgPlayer00,
             binding.imgPlayer01,
-            binding.imgPlayer02
+            binding.imgPlayer02,
+            binding.imgPlayer03,
+            binding.imgPlayer04
         )
 
         // buttons
