@@ -209,6 +209,7 @@ class MainActivity : AppCompatActivity() {
         renderObstacles()
         renderPlayer()
         renderHearts()
+        renderScore()
     }
 
     private fun renderObstacles(){
@@ -257,6 +258,11 @@ class MainActivity : AppCompatActivity() {
                 heartViews[i].visibility = View.INVISIBLE
             }
         }
+    }
+
+    private fun renderScore() {
+        binding.txtDistance.text = "Distance: ${game.distance}"
+        binding.txtScore.text = "Score: ${game.score}"
     }
 
     private fun vibrate(milliseconds: Long = 100) {
