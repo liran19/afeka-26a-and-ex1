@@ -218,10 +218,18 @@ class MainActivity : AppCompatActivity() {
                 val view = obstacleViews[r][c]
                 val cellType = game.grid[r][c]
 
-                if (cellType.isVisible){
-                    view.visibility = View.VISIBLE
-                }else {
-                    view.visibility = View.INVISIBLE
+                when (cellType) {
+                    CellType.OBSTACLE -> {
+                        view.visibility = View.VISIBLE
+                        view.setImageResource(R.drawable.img_space_meteor)
+                    }
+                    CellType.COIN -> {
+                        view.visibility = View.VISIBLE
+                        view.setImageResource(R.drawable.img_spaceship_rocket_fuel)
+                    }
+                    CellType.EMPTY -> {
+                        view.visibility = View.INVISIBLE
+                    }
                 }
             }
         }
@@ -277,6 +285,9 @@ class MainActivity : AppCompatActivity() {
                 hitToast?.cancel() // Cancel the previous toast
                 hitToast = Toast.makeText(this, message, Toast.LENGTH_SHORT)
                 hitToast?.show()
+            }
+            GameEvent.COIN_COLLECTED -> {
+                // TODO: add here
             }
             GameEvent.GAME_OVER -> {
                 vibrate(250)

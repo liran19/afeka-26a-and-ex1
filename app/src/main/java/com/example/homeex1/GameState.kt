@@ -6,13 +6,15 @@ import kotlin.random.Random
 enum class CellType(val isVisible: Boolean) {
     EMPTY(false),
     OBSTACLE(true),
+    COIN(true),
     // Can add here stuff like COINS, HEARTS, BOOSTS, etc - for future use.
 }
 
 enum class GameEvent {
     NONE,
     HIT,
-    GAME_OVER
+    GAME_OVER,
+    COIN_COLLECTED
 }
 
 class GameState(val config: GameConfig) {
@@ -22,6 +24,10 @@ class GameState(val config: GameConfig) {
     val player = Player(cols = config.cols, startLives = config.startLives)
 
     var isGameOver: Boolean = false
+    var score: Int = 0
+        private set
+    var distance: Int = 0
+        private set
 
     fun reset() {
         for (r in 0 until config.rows){
@@ -30,6 +36,8 @@ class GameState(val config: GameConfig) {
             }
         }
         isGameOver = false
+        score = 0
+        distance = 0
         player.reset()
     }
 
@@ -47,20 +55,29 @@ class GameState(val config: GameConfig) {
         if (isGameOver) return GameEvent.NONE
 
         var event = GameEvent.NONE
+        distance++ // Increment distance each step
 
         // Check bottom row cell
         val bottomRowIndex = config.rows - 1
         val playerCol = player.getCol()
         val cellUnderPlayer = grid[bottomRowIndex][playerCol]
 
-        if(cellUnderPlayer == CellType.OBSTACLE){
-            val dead = player.takeHit()
-
-            grid[bottomRowIndex][playerCol] = CellType.EMPTY
-
-            event = if (dead) GameEvent.GAME_OVER else GameEvent.HIT
-            if (dead) {
-                isGameOver = true
+        when (cellUnderPlayer) {
+            CellType.OBSTACLE -> {
+                val dead = player.takeHit()
+                grid[bottomRowIndex][playerCol] = CellType.EMPTY
+                event = if (dead) GameEvent.GAME_OVER else GameEvent.HIT
+                if (dead) {
+                    isGameOver = true
+                }
+            }
+            CellType.COIN -> {
+                score += 10 // Collect coin worth 10 points
+                grid[bottomRowIndex][playerCol] = CellType.EMPTY
+                event = GameEvent.COIN_COLLECTED
+            }
+            CellType.EMPTY -> {
+                // Nothing happens
             }
         }
 
@@ -71,7 +88,6 @@ class GameState(val config: GameConfig) {
         spawnNewRow()
 
         return event
-
     }
     private fun moveCellsDown() {
         for (r in config.rows - 1 downTo 1) {
@@ -86,9 +102,15 @@ class GameState(val config: GameConfig) {
     }
 
     private fun spawnNewRow() {
+        // Try to spawn obstacle
         if (Random.nextFloat() < config.spawnChance) {
             val lane = Random.nextInt(config.cols)
             grid[0][lane] = CellType.OBSTACLE
+        }
+        // Try to spawn coin
+        else if (Random.nextFloat() < config.coinChance) {
+            val lane = Random.nextInt(config.cols)
+            grid[0][lane] = CellType.COIN
         }
     }
 
