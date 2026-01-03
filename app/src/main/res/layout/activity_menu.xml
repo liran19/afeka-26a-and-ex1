@@ -83,6 +83,15 @@
             app:cornerRadius="24dp"
             android:padding="16dp" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/menu_btn_top_ten"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Top 10 Leaderboard"
+            android:textSize="18sp"
+            app:cornerRadius="24dp"
+            android:padding="16dp" />
+
     </LinearLayout>
 
 </RelativeLayout>

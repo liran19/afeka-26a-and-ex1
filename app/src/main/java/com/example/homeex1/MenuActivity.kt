@@ -41,6 +41,12 @@ class MenuActivity : AppCompatActivity() {
         binding.menuBtnSensors.setOnClickListener {
             startGame(GameMode.SENSORS)
         }
+
+        // Top 10 leaderboard
+        binding.menuBtnTopTen.setOnClickListener {
+            val intent = Intent(this, TopTenActivity::class.java)
+            startActivity(intent)
+        }
     }
 
     private fun startGame(gameMode: GameMode) {

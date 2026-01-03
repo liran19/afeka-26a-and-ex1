@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fragment_map_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#C8E6C9">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/fragment_map_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=" Location Map"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#2E7D32"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Google Map -->
+    <fragment
+        android:id="@+id/fragment_map_view"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/fragment_map_title"
+        android:layout_above="@id/fragment_map_details"
+        android:layout_marginTop="8dp"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Info message when no score selected -->
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/fragment_map_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:textSize="18sp"
+        android:text="Select a score to view location"
+        android:textColor="#424242"
+        android:gravity="center"
+        android:padding="16dp"
+        android:background="#CCFFFFFF"
+        android:elevation="4dp"
+        android:visibility="visible" />
+
+    <!-- Score details card (overlay on map) -->
+    <LinearLayout
+        android:id="@+id/fragment_map_details"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp"
+        android:orientation="vertical"
+        android:background="#FFFFFF"
+        android:padding="16dp"
+        android:elevation="8dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/fragment_map_player_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Player Name"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#000000" />
+
+        <TextView
+            android:id="@+id/fragment_map_coordinates"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Lat: 0.0, Lon: 0.0"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:id="@+id/fragment_map_score_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Score: 100 | Distance: 50"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:id="@+id/fragment_map_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="01/01/2024 12:00"
+            android:textSize="12sp"
+            android:textColor="#999999"
+            android:layout_marginTop="4dp" />
+
+    </LinearLayout>
+
+</RelativeLayout>
+
