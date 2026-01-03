@@ -1,5 +1,6 @@
 package com.example.homeex1
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -308,15 +309,24 @@ class MainActivity : AppCompatActivity() {
                 vibrate(250)
                 soundPlayer.playSound(R.raw.crash)
                 
-                val message = "Game over! Restarting..."
-                hitToast?.cancel() // Cancel the previous toast
+                val message = "Game Over!"
+                hitToast?.cancel()
                 hitToast = Toast.makeText(this, message, Toast.LENGTH_SHORT)
                 hitToast?.show()
 
+                // Stop game loop
+                handler.removeCallbacks(gameRunnable)
+
+                // Navigate to Final Score Activity after short delay
                 handler.postDelayed({
-                    game.reset()
-                    render()
-                }, 1000)
+                    val intent = Intent(this, FinalScoreActivity::class.java)
+                    intent.putExtra(FinalScoreActivity.FINAL_DISTANCE_KEY, game.distance)
+                    intent.putExtra(FinalScoreActivity.FINAL_SCORE_KEY, game.score)
+                    intent.putExtra(FinalScoreActivity.GAME_MODE_KEY, gameMode.name)
+                    intent.putExtra(FinalScoreActivity.FAST_MODE_KEY, isFastMode)
+                    startActivity(intent)
+                    finish()
+                }, 1500)
             }
         }
     }
