@@ -30,7 +30,8 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val GAME_MODE_KEY = "GAME_MODE_KEY"
         const val FAST_MODE_KEY = "FAST_MODE_KEY"
-        private const val TILT_THRESHOLD = 2.0f // Sensitivity threshold for tilt detection
+        private const val TILT_THRESHOLD = 3.5f 
+        private const val SENSOR_DELAY_MS = 150L
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -49,6 +50,7 @@ class MainActivity : AppCompatActivity() {
 
     // Sensor support
     private var accSensorApi: AccSensorApi? = null
+    private var lastSensorMoveTime: Long = 0
 
     // Game loop
     private val handler = Handler(Looper.getMainLooper())
@@ -234,16 +236,24 @@ class MainActivity : AppCompatActivity() {
     private fun handleSensorData(x: Float, y: Float, z: Float) {
         if (game.isGameOver) return
         
+        // Debounce: prevent too rapid movements
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastSensorMoveTime < SENSOR_DELAY_MS) {
+            return
+        }
+        
         when {
             x > TILT_THRESHOLD -> {
-                // Tilted left - move player left
+                // Tilted left - move player left one lane
                 game.movePlayerLeft()
                 renderPlayer()
+                lastSensorMoveTime = currentTime
             }
             x < -TILT_THRESHOLD -> {
-                // Tilted right - move player right
+                // Tilted right - move player right one lane
                 game.movePlayerRight()
                 renderPlayer()
+                lastSensorMoveTime = currentTime
             }
         }
     }
