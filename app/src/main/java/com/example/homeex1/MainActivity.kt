@@ -30,8 +30,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val GAME_MODE_KEY = "GAME_MODE_KEY"
         const val FAST_MODE_KEY = "FAST_MODE_KEY"
-        private const val TILT_THRESHOLD = 3.5f 
-        private const val SENSOR_DELAY_MS = 150L
+        private const val MAX_TILT = 5.5f
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -50,7 +49,6 @@ class MainActivity : AppCompatActivity() {
 
     // Sensor support
     private var accSensorApi: AccSensorApi? = null
-    private var lastSensorMoveTime: Long = 0
 
     // Game loop
     private val handler = Handler(Looper.getMainLooper())
@@ -229,32 +227,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Handle accelerometer sensor data for player movement
-     * x > 0 means device tilted to the left (player should move left)
-     * x < 0 means device tilted to the right (player should move right)
+     * Handle accelerometer sensor data for player movement.
+     * Maps the tilt angle directly to a lane index.
      */
     private fun handleSensorData(x: Float, y: Float, z: Float) {
         if (game.isGameOver) return
         
-        // Debounce: prevent too rapid movements
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastSensorMoveTime < SENSOR_DELAY_MS) {
-            return
-        }
+        val numCols = game.config.cols
         
-        when {
-            x > TILT_THRESHOLD -> {
-                // Tilted left - move player left one lane
-                game.movePlayerLeft()
-                renderPlayer()
-                lastSensorMoveTime = currentTime
-            }
-            x < -TILT_THRESHOLD -> {
-                // Tilted right - move player right one lane
-                game.movePlayerRight()
-                renderPlayer()
-                lastSensorMoveTime = currentTime
-            }
+        // Map x from [-MAX_TILT, MAX_TILT] to lane indices [numCols-1, 0]
+        // On Android, x > 0 typically means device tilted to the left (lane 0)
+        // x < 0 means device tilted to the right (lane numCols-1)
+        val normalizedX = ((x + MAX_TILT) / (2 * MAX_TILT)).coerceIn(0f, 1f)
+        
+        // Linear mapping to lane index with rounding
+        val targetCol = ((1f - normalizedX) * (numCols - 1) + 0.5f).toInt().coerceIn(0, numCols - 1)
+        
+        if (targetCol != game.player.getCol()) {
+            game.movePlayerToCol(targetCol)
+            renderPlayer()
         }
     }
 

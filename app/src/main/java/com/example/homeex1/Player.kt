@@ -24,6 +24,10 @@ class Player(
         return lives
     }
 
+    fun setCol(newCol: Int) {
+        col = newCol.coerceIn(0, cols - 1)
+    }
+
     fun moveLeft() {
         // Only move if not at the left border
         if (col > 0) {
@@ -45,4 +49,3 @@ class Player(
         return lives <= 0
     }
 }
-

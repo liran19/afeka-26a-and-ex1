@@ -50,6 +50,10 @@ class GameState(val config: GameConfig) {
         player.moveRight()
     }
 
+    fun movePlayerToCol(col: Int) {
+        player.setCol(col)
+    }
+
     // Game "tick" logic
     fun step(): GameEvent {
         if (isGameOver) return GameEvent.NONE
