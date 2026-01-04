@@ -17,6 +17,8 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.example.homeex1.databinding.ActivityMainBinding
 import com.example.homeex1.utilities.SoundEffectPlayer
+import com.example.homeex1.utilities.AccSensorApi
+import com.example.homeex1.utilities.AccSensorCallBack
 
 enum class GameMode {
     BUTTONS,
@@ -28,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val GAME_MODE_KEY = "GAME_MODE_KEY"
         const val FAST_MODE_KEY = "FAST_MODE_KEY"
+        private const val TILT_THRESHOLD = 2.0f // Sensitivity threshold for tilt detection
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -43,6 +46,9 @@ class MainActivity : AppCompatActivity() {
     // Game settings from menu
     private var gameMode: GameMode = GameMode.BUTTONS
     private var isFastMode: Boolean = false
+
+    // Sensor support
+    private var accSensorApi: AccSensorApi? = null
 
     // Game loop
     private val handler = Handler(Looper.getMainLooper())
@@ -92,11 +98,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        // Start sensor if in sensor mode
+        if (gameMode == GameMode.SENSORS) {
+            accSensorApi?.start()
+        }
         startGameLoop()
     }
 
     override fun onPause() {
         super.onPause()
+        // Stop sensor if in sensor mode
+        if (gameMode == GameMode.SENSORS) {
+            accSensorApi?.stop()
+        }
         handler.removeCallbacks(gameRunnable)
     }
 
@@ -201,7 +215,35 @@ class MainActivity : AppCompatActivity() {
             GameMode.SENSORS -> {
                 binding.btnLeft.visibility = View.GONE
                 binding.btnRight.visibility = View.GONE
-                // TODO: Add sensor support
+                
+                // Initialize accelerometer sensor
+                accSensorApi = AccSensorApi(this, object : AccSensorCallBack {
+                    override fun data(x: Float, y: Float, z: Float) {
+                        handleSensorData(x, y, z)
+                    }
+                })
+            }
+        }
+    }
+
+    /**
+     * Handle accelerometer sensor data for player movement
+     * x > 0 means device tilted to the left (player should move left)
+     * x < 0 means device tilted to the right (player should move right)
+     */
+    private fun handleSensorData(x: Float, y: Float, z: Float) {
+        if (game.isGameOver) return
+        
+        when {
+            x > TILT_THRESHOLD -> {
+                // Tilted left - move player left
+                game.movePlayerLeft()
+                renderPlayer()
+            }
+            x < -TILT_THRESHOLD -> {
+                // Tilted right - move player right
+                game.movePlayerRight()
+                renderPlayer()
             }
         }
     }
