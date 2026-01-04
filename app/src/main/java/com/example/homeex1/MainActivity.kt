@@ -98,6 +98,7 @@ class MainActivity : AppCompatActivity() {
         
         SoundEffectPlayer.init(this)
         SoundEffectPlayer.load(this, R.raw.crash)
+        SoundEffectPlayer.load(this, R.raw.coin)
         
         initViews()
         initButtons()
@@ -370,7 +371,7 @@ class MainActivity : AppCompatActivity() {
                 hitToast?.show()
             }
             GameEvent.COIN_COLLECTED -> {
-                // TODO: add here
+                SoundEffectPlayer.play(R.raw.coin)
             }
             GameEvent.GAME_OVER -> {
                 vibrate(250)
