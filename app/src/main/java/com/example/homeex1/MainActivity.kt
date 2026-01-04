@@ -31,6 +31,8 @@ class MainActivity : AppCompatActivity() {
         const val GAME_MODE_KEY = "GAME_MODE_KEY"
         const val FAST_MODE_KEY = "FAST_MODE_KEY"
         private const val MAX_TILT = 5.5f
+        private const val TILT_SPEED_THRESHOLD = 2.5f
+        private const val SPEED_BOOST_DURATION = 2000L
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -53,6 +55,12 @@ class MainActivity : AppCompatActivity() {
     // Game loop
     private val handler = Handler(Looper.getMainLooper())
     private var tickMillis = 1000L
+    private var baseTickMillis = 1000L
+    private var isSpeedBoosted = false
+    
+    private var lastY = 0f
+    private var tiltDirection = 0
+    private var lastTiltTime = 0L
 
     private val gameRunnable = object : Runnable {
         override fun run() {
@@ -82,8 +90,8 @@ class MainActivity : AppCompatActivity() {
         gameMode = GameMode.valueOf(modeString)
         isFastMode = intent.getBooleanExtra(FAST_MODE_KEY, false)
         
-        // Set game speed based on mode
-        tickMillis = if (isFastMode) 500L else 1000L
+        baseTickMillis = if (isFastMode) 500L else 1000L
+        tickMillis = baseTickMillis
 
         val config = GameConfig()
         game = GameState(config)
@@ -235,17 +243,35 @@ class MainActivity : AppCompatActivity() {
         
         val numCols = game.config.cols
         
-        // Map x from [-MAX_TILT, MAX_TILT] to lane indices [numCols-1, 0]
-        // On Android, x > 0 typically means device tilted to the left (lane 0)
-        // x < 0 means device tilted to the right (lane numCols-1)
         val normalizedX = ((x + MAX_TILT) / (2 * MAX_TILT)).coerceIn(0f, 1f)
-        
-        // Linear mapping to lane index with rounding
         val targetCol = ((1f - normalizedX) * (numCols - 1) + 0.5f).toInt().coerceIn(0, numCols - 1)
         
         if (targetCol != game.player.getCol()) {
             game.movePlayerToCol(targetCol)
             renderPlayer()
+        }
+        
+        val currentTime = System.currentTimeMillis()
+        val yDiff = y - lastY
+        
+        if (kotlin.math.abs(yDiff) > TILT_SPEED_THRESHOLD) {
+            val currentDirection = if (yDiff > 0) 1 else -1
+            
+            if (currentDirection != tiltDirection && tiltDirection != 0) {
+                lastTiltTime = currentTime
+                if (!isSpeedBoosted) {
+                    isSpeedBoosted = true
+                    tickMillis = baseTickMillis / 2
+                }
+            }
+            tiltDirection = currentDirection
+        }
+        
+        lastY = y
+        
+        if (isSpeedBoosted && currentTime - lastTiltTime > SPEED_BOOST_DURATION) {
+            isSpeedBoosted = false
+            tickMillis = baseTickMillis
         }
     }
 
