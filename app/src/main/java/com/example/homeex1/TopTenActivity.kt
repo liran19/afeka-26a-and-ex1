@@ -1,5 +1,6 @@
 package com.example.homeex1
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -30,8 +31,15 @@ class TopTenActivity : AppCompatActivity() {
 
     private fun setupToolbar() {
         binding.toptenToolbar.setNavigationOnClickListener {
-            finish()
+            navigateToMenu()
         }
+    }
+
+    private fun navigateToMenu() {
+        val intent = Intent(this, MenuActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        startActivity(intent)
+        finish()
     }
 
     private fun setupFragments() {

@@ -16,7 +16,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.example.homeex1.databinding.ActivityMainBinding
-import com.example.homeex1.utilities.SingleSoundPlayer
+import com.example.homeex1.utilities.SoundEffectPlayer
 
 enum class GameMode {
     BUTTONS,
@@ -39,9 +39,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var heartViews: List<ImageView>
     private lateinit var btnLeft: FloatingActionButton
     private lateinit var btnRight: FloatingActionButton
-
-    // Sound player
-    private lateinit var soundPlayer: SingleSoundPlayer
 
     // Game settings from menu
     private var gameMode: GameMode = GameMode.BUTTONS
@@ -85,7 +82,8 @@ class MainActivity : AppCompatActivity() {
         val config = GameConfig()
         game = GameState(config)
         
-        soundPlayer = SingleSoundPlayer(this)
+        SoundEffectPlayer.init(this)
+        SoundEffectPlayer.load(this, R.raw.crash)
         
         initViews()
         initButtons()
@@ -295,7 +293,7 @@ class MainActivity : AppCompatActivity() {
             GameEvent.NONE -> {}
             GameEvent.HIT -> {
                 vibrate(80)
-                soundPlayer.playSound(R.raw.crash)
+                SoundEffectPlayer.play(R.raw.crash)
                 
                 val message = "Crash! Lives left: ${game.player.getLives()}"
                 hitToast?.cancel() // Cancel the previous toast
@@ -307,7 +305,7 @@ class MainActivity : AppCompatActivity() {
             }
             GameEvent.GAME_OVER -> {
                 vibrate(250)
-                soundPlayer.playSound(R.raw.crash)
+                SoundEffectPlayer.play(R.raw.crash)
                 
                 val message = "Game Over!"
                 hitToast?.cancel()

@@ -5,8 +5,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.widget.EditText
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,31 +33,25 @@ class FinalScoreActivity : AppCompatActivity() {
     private lateinit var binding: ActivityFinalScoreBinding
     private lateinit var scoreManager: ScoreManager
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private val handler = Handler(Looper.getMainLooper())
     
     private var distance: Int = 0
     private var score: Int = 0
     private var gameMode: GameMode = GameMode.BUTTONS
     private var isFastMode: Boolean = false
     private var totalScore: Int = 0
-    private var scoreSaved: Boolean = false
-    private var dialogShown: Boolean = false  // Flag to prevent showing dialog twice
     
     private var currentLocation: Location? = null
 
-    // Permission launcher
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        when {
-            permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true -> {
-                // Permission granted - get location
-                getCurrentLocation()
-            }
-            else -> {
-                // No location permission - show dialog with default location
-                showNameDialog()
-            }
+        if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        ) {
+            getLocationAndShowDialog()
+        } else {
+            showNameDialog()
         }
     }
 
@@ -71,7 +66,6 @@ class FinalScoreActivity : AppCompatActivity() {
             insets
         }
 
-        // Get data from intent
         distance = intent.getIntExtra(FINAL_DISTANCE_KEY, 0)
         score = intent.getIntExtra(FINAL_SCORE_KEY, 0)
         val modeString = intent.getStringExtra(GAME_MODE_KEY) ?: GameMode.BUTTONS.name
@@ -84,8 +78,9 @@ class FinalScoreActivity : AppCompatActivity() {
         setupBackPressHandler()
         initViews()
         
-        // Request location permission and get location
-        requestLocationAndShowDialog()
+        handler.postDelayed({
+            requestLocationPermission()
+        }, 500)
     }
 
     private fun setupBackPressHandler() {
@@ -97,14 +92,10 @@ class FinalScoreActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        // Calculate final score (distance + coin score)
         val baseScore = distance + score
-        
-        // 1.5x bonus for playing on fast mode
         val multiplier = if (isFastMode) 1.5 else 1.0
         totalScore = (baseScore * multiplier).toInt()
         
-        // Display final score
         binding.finalScoreTotal.text = totalScore.toString()
         
         if (isFastMode) {
@@ -114,12 +105,11 @@ class FinalScoreActivity : AppCompatActivity() {
             binding.finalScoreMultiplier.visibility = android.view.View.GONE
         }
         
-        // Display breakdown of final score (how it is calculated)
         binding.finalScoreDistance.text = distance.toString()
         binding.finalScoreCoins.text = score.toString()
 
-        binding.finalScoreBtnMenu.setOnClickListener {
-            navigateToMenu()
+        binding.finalScoreBtnTopTen.setOnClickListener {
+            navigateToLeaderboard()
         }
 
         binding.finalScoreBtnPlayAgain.setOnClickListener {
@@ -129,9 +119,13 @@ class FinalScoreActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
+
+        binding.finalScoreBtnMenu.setOnClickListener {
+            navigateToMenu()
+        }
     }
 
-    private fun requestLocationAndShowDialog() {
+    private fun requestLocationPermission() {
         when {
             ContextCompat.checkSelfPermission(
                 this,
@@ -141,11 +135,9 @@ class FinalScoreActivity : AppCompatActivity() {
                 this,
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED -> {
-                // Permission already granted
-                getCurrentLocation()
+                getLocationAndShowDialog()
             }
             else -> {
-                // Request permission
                 locationPermissionLauncher.launch(
                     arrayOf(
                         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -156,81 +148,50 @@ class FinalScoreActivity : AppCompatActivity() {
         }
     }
 
-    private fun getCurrentLocation() {
-        if (dialogShown) return // Already processed
-        
+    private fun getLocationAndShowDialog() {
         try {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                fusedLocationClient.lastLocation
-                    .addOnSuccessListener { location: Location? ->
-                        currentLocation = location
-                        if (!dialogShown) {
-                            dialogShown = true
-                            showNameDialog()
-                        }
-                    }
-                    .addOnFailureListener {
-                        if (!dialogShown) {
-                            dialogShown = true
-                            showNameDialog()
-                        }
-                    }
-            } else {
-                if (!dialogShown) {
-                    dialogShown = true
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location: Location? ->
+                    currentLocation = location
                     showNameDialog()
                 }
-            }
-        } catch (_: Exception) {
-            if (!dialogShown) {
-                dialogShown = true
-                showNameDialog()
-            }
+                .addOnFailureListener {
+                    showNameDialog()
+                }
+        } catch (e: SecurityException) {
+            showNameDialog()
         }
     }
 
     private fun showNameDialog() {
-        // Double-check not already shown
-        if (dialogShown && scoreSaved) {
-            return
-        }
+        if (isFinishing || isDestroyed) return
         
         val input = EditText(this)
         input.hint = "Enter your name"
         input.setPadding(50, 20, 50, 20)
 
-        AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setTitle("New High Score!")
             .setMessage("Your score: $totalScore\n\nEnter your name to save it to the leaderboard:")
             .setView(input)
             .setCancelable(false)
             .setPositiveButton("Save") { dialog, _ ->
                 val playerName = input.text.toString().trim()
-                if (playerName.isNotEmpty()) {
-                    saveScore(playerName)
-                } else {
-                    saveScore("Anonymous")
-                }
+                saveScore(if (playerName.isNotEmpty()) playerName else "Anonymous")
                 dialog.dismiss()
             }
             .setNegativeButton("Skip") { dialog, _ ->
-                scoreSaved = true
                 dialog.dismiss()
             }
-            .show()
+            .create()
+        
+        dialog.show()
+        input.requestFocus()
     }
 
     private fun saveScore(playerName: String) {
-        val latitude = currentLocation?.latitude ?: 32.0853 // Default: Tel Aviv
-        val longitude = currentLocation?.longitude ?: 34.7818
+        val latitude = currentLocation?.latitude ?: 0.0
+        val longitude = currentLocation?.longitude ?: 0.0
         
         val newScore = Score(
             playerName = playerName,
@@ -245,20 +206,12 @@ class FinalScoreActivity : AppCompatActivity() {
         )
 
         scoreManager.addScore(newScore)
-        scoreSaved = true
+    }
 
-        // Show confirmation with location info
-        val locationInfo = if (currentLocation != null) {
-            "Location recorded!"
-        } else {
-            "Default location used (enable location for precise tracking)"
-        }
-        
-        Toast.makeText(
-            this,
-            "Score saved! $locationInfo\nCheck the Top 10 leaderboard!",
-            Toast.LENGTH_LONG
-        ).show()
+    private fun navigateToLeaderboard() {
+        val intent = Intent(this, TopTenActivity::class.java)
+        startActivity(intent)
+        finish()
     }
 
     private fun navigateToMenu() {

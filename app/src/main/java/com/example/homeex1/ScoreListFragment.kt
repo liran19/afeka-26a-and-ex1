@@ -5,8 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.homeex1.databinding.FragmentScoreListBinding
-import com.example.homeex1.databinding.ItemScoreBinding
 import com.example.homeex1.utilities.ScoreManager
 
 class ScoreListFragment : Fragment() {
@@ -16,6 +16,7 @@ class ScoreListFragment : Fragment() {
 
     private var callback: ScoreClickCallback? = null
     private lateinit var scoreManager: ScoreManager
+    private lateinit var adapter: ScoreAdapter
 
     fun setCallback(callback: ScoreClickCallback) {
         this.callback = callback
@@ -35,7 +36,12 @@ class ScoreListFragment : Fragment() {
 
         scoreManager = ScoreManager.getInstance(requireContext())
         
+        setupRecyclerView()
         loadScores()
+    }
+
+    private fun setupRecyclerView() {
+        binding.fragmentScoreListRecycler.layoutManager = LinearLayoutManager(requireContext())
     }
 
     private fun loadScores() {
@@ -43,54 +49,14 @@ class ScoreListFragment : Fragment() {
         
         if (scores.isEmpty()) {
             binding.fragmentScoreListEmpty.visibility = View.VISIBLE
-            binding.fragmentScoreListScroll.visibility = View.GONE
+            binding.fragmentScoreListRecycler.visibility = View.GONE
         } else {
             binding.fragmentScoreListEmpty.visibility = View.GONE
-            binding.fragmentScoreListScroll.visibility = View.VISIBLE
+            binding.fragmentScoreListRecycler.visibility = View.VISIBLE
             
-            // Clear any existing views
-            binding.fragmentScoreListContainer.removeAllViews()
-            
-            // Add a card for each score
-            scores.forEachIndexed { index, score ->
-                val scoreCard = createScoreCard(score, index + 1)
-                binding.fragmentScoreListContainer.addView(scoreCard)
-            }
+            adapter = ScoreAdapter(scores, callback)
+            binding.fragmentScoreListRecycler.adapter = adapter
         }
-    }
-
-    private fun createScoreCard(score: Score, rank: Int): View {
-        // Use ViewBinding to inflate the card
-        val cardBinding = ItemScoreBinding.inflate(
-            LayoutInflater.from(requireContext()),
-            binding.fragmentScoreListContainer,
-            false
-        )
-        
-        // Set data using binding
-        cardBinding.itemScoreRank.text = rank.toString()
-        
-        // Color medals for top 3
-        cardBinding.itemScoreRank.setTextColor(
-            when (rank) {
-                1 -> 0xFFFFD700.toInt() // Gold
-                2 -> 0xFFC0C0C0.toInt() // Silver
-                3 -> 0xFFCD7F32.toInt() // Bronze
-                else -> 0xFF666666.toInt() // Gray
-            }
-        )
-
-        cardBinding.itemScoreName.text = score.playerName
-        cardBinding.itemScoreDetails.text = "Distance: ${score.distance} | Coins: ${score.score}"
-        cardBinding.itemScoreTime.text = score.getFormattedTime()
-        cardBinding.itemScoreTotal.text = score.totalScore.toString()
-
-        // Set click listener
-        cardBinding.root.setOnClickListener {
-            callback?.onScoreClicked(score)
-        }
-        
-        return cardBinding.root
     }
 
     override fun onDestroyView() {

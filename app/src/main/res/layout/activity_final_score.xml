@@ -135,10 +135,10 @@
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/final_score_btn_menu"
+            android:id="@+id/final_score_btn_top_ten"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Back to Menu"
+            android:text="View Top 10"
             android:textSize="18sp"
             android:layout_marginBottom="16dp"
             app:cornerRadius="24dp"
@@ -151,6 +151,15 @@
             android:text="Play Again"
             android:textSize="18sp"
             android:layout_marginBottom="16dp"
+            app:cornerRadius="24dp"
+            android:padding="16dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/final_score_btn_menu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Back to Menu"
+            android:textSize="18sp"
             app:cornerRadius="24dp"
             android:padding="16dp" />
 
