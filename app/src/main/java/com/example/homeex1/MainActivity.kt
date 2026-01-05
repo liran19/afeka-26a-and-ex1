@@ -7,9 +7,6 @@ import android.os.Looper
 import android.view.View
 import android.widget.ImageView
 import android.widget.Toast
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -17,6 +14,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.example.homeex1.databinding.ActivityMainBinding
 import com.example.homeex1.utilities.SoundEffectPlayer
+import com.example.homeex1.utilities.VibrationManager
 import com.example.homeex1.utilities.AccSensorApi
 import com.example.homeex1.utilities.AccSensorCallBack
 
@@ -99,6 +97,8 @@ class MainActivity : AppCompatActivity() {
         SoundEffectPlayer.init(this)
         SoundEffectPlayer.load(this, R.raw.crash)
         SoundEffectPlayer.load(this, R.raw.coin)
+        
+        VibrationManager.init(this)
         
         initViews()
         initButtons()
@@ -341,28 +341,12 @@ class MainActivity : AppCompatActivity() {
         binding.txtScore.text = "Score: ${game.score}"
     }
 
-    private fun vibrate(milliseconds: Long = 100) {
-        val vibratorManager = getSystemService(VibratorManager::class.java)
-        val vibrator: Vibrator = vibratorManager.defaultVibrator
-
-        if (!vibrator.hasVibrator()) {
-            Toast.makeText(this, "No vibrator on this device", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        vibrator.vibrate(
-            VibrationEffect.createOneShot(
-                milliseconds,
-                VibrationEffect.DEFAULT_AMPLITUDE
-            )
-        )
-    }
 
     private fun handleEvent(event: GameEvent) {
         when (event) {
             GameEvent.NONE -> {}
             GameEvent.HIT -> {
-                vibrate(80)
+                VibrationManager.vibrate(80)
                 SoundEffectPlayer.play(R.raw.crash)
                 
                 val message = "Crash! Lives left: ${game.player.getLives()}"
@@ -374,7 +358,7 @@ class MainActivity : AppCompatActivity() {
                 SoundEffectPlayer.play(R.raw.coin)
             }
             GameEvent.GAME_OVER -> {
-                vibrate(250)
+                VibrationManager.vibrate(250)
                 SoundEffectPlayer.play(R.raw.crash)
                 
                 val message = "Game Over!"
