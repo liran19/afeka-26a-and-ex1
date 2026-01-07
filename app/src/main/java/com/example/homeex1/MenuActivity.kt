@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.homeex1.databinding.ActivityMenuBinding
+import com.example.homeex1.utilities.BackgroundMusicPlayer
 
 class MenuActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMenuBinding
@@ -24,6 +25,18 @@ class MenuActivity : AppCompatActivity() {
         }
 
         initViews()
+
+        BackgroundMusicPlayer.play(this, R.raw.background_music, volume = 0.3f)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        BackgroundMusicPlayer.play(this, R.raw.background_music, volume = 0.3f)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        BackgroundMusicPlayer.pause()
     }
 
     private fun initViews() {

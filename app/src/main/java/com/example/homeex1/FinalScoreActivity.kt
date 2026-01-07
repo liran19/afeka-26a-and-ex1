@@ -220,4 +220,9 @@ class FinalScoreActivity : AppCompatActivity() {
         startActivity(intent)
         finish()
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        handler.removeCallbacksAndMessages(null)
+    }
 }

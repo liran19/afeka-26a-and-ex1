@@ -17,6 +17,7 @@ import com.example.homeex1.utilities.SoundEffectPlayer
 import com.example.homeex1.utilities.VibrationManager
 import com.example.homeex1.utilities.AccSensorApi
 import com.example.homeex1.utilities.AccSensorCallBack
+import com.example.homeex1.utilities.BackgroundMusicPlayer
 
 enum class GameMode {
     BUTTONS,
@@ -100,6 +101,8 @@ class MainActivity : AppCompatActivity() {
         
         VibrationManager.init(this)
         
+        BackgroundMusicPlayer.play(this, R.raw.background_music, volume = 0.3f)
+        
         initViews()
         initButtons()
         render()
@@ -111,6 +114,8 @@ class MainActivity : AppCompatActivity() {
         if (gameMode == GameMode.SENSORS) {
             accSensorApi?.start()
         }
+        SoundEffectPlayer.resumeAll()
+        BackgroundMusicPlayer.play(this, R.raw.background_music, volume = 0.3f)
         startGameLoop()
     }
 
@@ -120,7 +125,19 @@ class MainActivity : AppCompatActivity() {
         if (gameMode == GameMode.SENSORS) {
             accSensorApi?.stop()
         }
+        SoundEffectPlayer.pauseAll()
+        BackgroundMusicPlayer.pause()
+        VibrationManager.cancel()
         handler.removeCallbacks(gameRunnable)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        handler.removeCallbacksAndMessages(null)
+        accSensorApi?.stop()
+        hitToast?.cancel()
+        SoundEffectPlayer.release()
+        BackgroundMusicPlayer.stop()
     }
 
     private fun initViews() {
