@@ -29,27 +29,30 @@ Open https://console.cloud.google.com/ in your browser.
 
 That's it! You now have an API key.
 
-## Put it in the app
+## Put it in the app (Secure Method)
 
-Open `app/src/main/AndroidManifest.xml` and find this line:
+Open `local.properties` file in your project root (same folder as `build.gradle.kts`).
 
-```xml
-<meta-data
-    android:name="com.google.android.geo.API_KEY"
-    android:value="YOUR_API_KEY_HERE" />
+Add this line at the bottom:
+
+```properties
+MAPS_API_KEY="HERE"
 ```
 
-Replace `YOUR_API_KEY_HERE` with your actual key. Should look like:
+Replace the example key with your actual key from Google Cloud Console.
 
-```xml
-<meta-data
-    android:name="com.google.android.geo.API_KEY"
-    android:value="KEY..." />
-```
+**Why local.properties?**
+- It's automatically ignored by Git (keeps your key private)
+- Each team member can use their own key
+- More secure than hardcoding in AndroidManifest.xml
 
 ## Rebuild and run
 
-That's it. Rebuild the app and the map should work now.
+1. **Sync Gradle**: Click "Sync Now" in Android Studio (or File → Sync Project with Gradle Files)
+2. **Rebuild**: Build → Rebuild Project
+3. **Run**: The map should work now!
+
+**Note**: The app reads the key from `local.properties` and injects it into the AndroidManifest during build time.
 
 ## What if I don't add a key?
 
